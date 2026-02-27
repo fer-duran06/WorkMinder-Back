@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WorkMinder Backend
 
-## Getting Started
+API REST para la aplicación móvil WorkMinder - Sistema de gestión de tareas académicas con priorización inteligente.
 
-First, run the development server:
+## Tecnologías
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Framework:** Next.js 16 con TypeScript
+- **Base de datos:** MySQL 8.0
+- **ORM:** mysql2
+- **Autenticación:** JWT
+- **Contenedores:** Docker
+
+## Algoritmo de Priorización
+```
+P(t) = α·I(t) + β·U(t)
+
+Donde:
+- I(t) = Importancia = peso_calificacion / 100
+- U(t) = Urgencia = 1 - (dias_restantes / 30)
+- α = 0.6 (peso de importancia)
+- β = 0.4 (peso de urgencia)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Instalación
+```bash
+# Clonar repositorio
+git clone https://github.com/fer-duran06/WorkMinder-Back.git
+cd WorkMinder-Back
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Instalar dependencias
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Configurar variables de entorno
+cp .env.example .env.local
+# Editar .env.local con tus credenciales
 
-## Learn More
+# Levantar MySQL con Docker
+docker-compose up -d
 
-To learn more about Next.js, take a look at the following resources:
+# Ejecutar en desarrollo
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Base de Datos
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+El proyecto incluye:
+- 5 tablas principales (usuarios, periodos_academicos, materias, tareas, subtareas)
+- Vista `vw_tareas_priorizadas` con cálculo automático de prioridad
+- Datos de prueba para desarrollo
 
-## Deploy on Vercel
+## Endpoints
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+POST   /api/auth/register
+POST   /api/auth/login
+GET    /api/tasks
+GET    /api/tasks/prioritized  ⭐ Lista priorizada
+GET    /api/tasks/[id]
+POST   /api/tasks
+PUT    /api/tasks/[id]
+DELETE /api/tasks/[id]
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Equipo
+
+- **Fernando Duran** - Backend
+- **Moisés** - QA
+- **Ayelen** - Frontend
+
+## Licencia
+
+Proyecto académico - Universidad Politécnica de Chiapas
