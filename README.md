@@ -53,7 +53,7 @@ El proyecto incluye:
 POST   /api/auth/register
 POST   /api/auth/login
 GET    /api/tasks
-GET    /api/tasks/prioritized  ⭐ Lista priorizada
+GET    /api/tasks/prioritized  Lista priorizada
 GET    /api/tasks/[id]
 POST   /api/tasks
 PUT    /api/tasks/[id]
