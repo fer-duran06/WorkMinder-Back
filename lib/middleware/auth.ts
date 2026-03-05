@@ -1,39 +1,23 @@
-// lib/middleware/auth.ts
-import { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { NextRequest } from 'next/server'
+import { supabase } from '@/lib/supabase/client'
 
-export interface JWTPayload {
-  userId: string;
-  email: string;
-}
-
+// Verifica el token de Supabase y devuelve el userId
+// Si el token es inválido o no existe, lanza un error (el route devuelve 401)
 export async function verifyAuth(request: NextRequest): Promise<string> {
-  try {
-    // Obtener token del header Authorization
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('No se proporcionó token de autenticación');
-    }
+  const header = request.headers.get('Authorization')
 
-    const token = authHeader.substring(7); // Quitar "Bearer "
-    
-    // Verificar token
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'default_secret'
-    ) as JWTPayload;
-
-    return decoded.userId;
-  } catch (error) {
-    throw new Error('Token inválido o expirado');
+  if (!header || !header.startsWith('Bearer ')) {
+    throw new Error('Token no proporcionado')
   }
-}
 
-export function generateToken(userId: string, email: string): string {
-  return jwt.sign(
-    { userId, email },
-    process.env.JWT_SECRET as string,
-    { expiresIn: '7d' }
-  );
+  const token = header.split(' ')[1]
+
+  // Supabase verifica el token y devuelve el usuario
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+
+  if (error || !user) {
+    throw new Error('Token inválido o expirado')
+  }
+
+  return user.id // UUID del usuario autenticado
 }

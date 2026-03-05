@@ -1,25 +1,18 @@
-// app/api/auth/me/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/services/AuthService';
-import { verifyAuth } from '@/lib/middleware/auth';
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyAuth } from '@/lib/middleware/auth'
+import { AuthService } from '@/services/AuthService'
 
 export async function GET(request: NextRequest) {
   try {
-    // Verificar autenticación
-    const userId = await verifyAuth(request);
-
-    // Obtener usuario
-    const user = await AuthService.getUserById(userId);
-
-    return NextResponse.json({
-      success: true,
-      data: user
-    });
+    const userId = await verifyAuth(request)
+    const profile = await AuthService.getMe(userId)
+    return NextResponse.json({ success: true, data: profile })
 
   } catch (error: any) {
-    return NextResponse.json({
-      success: false,
-      error: error.message
-    }, { status: 401 });
+    const isAuthError = error.message.includes('Token')
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: isAuthError ? 401 : 500 }
+    )
   }
 }

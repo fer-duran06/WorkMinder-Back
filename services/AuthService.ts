@@ -1,112 +1,74 @@
-// services/AuthService.ts
-import bcrypt from 'bcrypt';
-import { db } from '@/lib/db/mysql';
-import { generateToken } from '@/lib/middleware/auth';
-import type { Usuario } from '@/types/database';
+import { supabase } from '@/lib/supabase/client'
 
 export class AuthService {
-  
-  /**
-   * Registrar nuevo usuario
-   */
-  static async register(
-    nombreCompleto: string,
-    correoElectronico: string,
-    contrasena: string
-  ) {
-    // Verificar si el usuario ya existe
-    const existingUser = await db.queryOne<Usuario>(
-      'SELECT id FROM usuarios WHERE correo_electronico = ?',
-      [correoElectronico]
-    );
 
-    if (existingUser) {
-      throw new Error('El correo electrónico ya está registrado');
-    }
+  // Registro de nuevo usuario
+  static async register(data: {
+    email: string
+    password: string
+    first_name: string
+    last_name: string
+  }) {
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
+          first_name: data.first_name,
+          last_name: data.last_name
+        }
+      }
+    })
 
-    // Hashear contraseña
-    const salt = await bcrypt.genSalt(10);
-    const contrasenaHash = await bcrypt.hash(contrasena, salt);
-
-    // Insertar usuario
-    const result = await db.execute(
-      `INSERT INTO usuarios (nombre_completo, correo_electronico, contrasena_hash) 
-       VALUES (?, ?, ?)`,
-      [nombreCompleto, correoElectronico, contrasenaHash]
-    );
-
-    const userId = (result as any).insertId;
-
-    // Obtener usuario creado
-    const user = await db.queryOne<Usuario>(
-      'SELECT id, nombre_completo, correo_electronico FROM usuarios WHERE id = ?',
-      [userId]
-    );
-
-    if (!user) {
-      throw new Error('Error al crear usuario');
-    }
-
-    // Generar token
-    const token = generateToken(user.id, user.correo_electronico);
+    if (error) throw new Error(error.message)
+    if (!authData.user) throw new Error('No se pudo crear el usuario')
 
     return {
-      token,
-      user: {
-        id: user.id,
-        nombre_completo: user.nombre_completo,
-        correo_electronico: user.correo_electronico
-      }
-    };
+      id: authData.user.id,
+      email: authData.user.email,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      access_token: authData.session?.access_token
+    }
   }
 
-  /**
-   * Login de usuario
-   */
-  static async login(correoElectronico: string, contrasena: string) {
-    // Buscar usuario
-    const user = await db.queryOne<Usuario>(
-      'SELECT id, nombre_completo, correo_electronico, contrasena_hash FROM usuarios WHERE correo_electronico = ?',
-      [correoElectronico]
-    );
+  // Login
+  static async login(email: string, password: string) {
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
 
-    if (!user) {
-      throw new Error('Credenciales inválidas');
-    }
+    if (error) throw new Error('Credenciales incorrectas')
 
-    // Verificar contraseña
-    const isValidPassword = await bcrypt.compare(contrasena, user.contrasena_hash);
-
-    if (!isValidPassword) {
-      throw new Error('Credenciales inválidas');
-    }
-
-    // Generar token
-    const token = generateToken(user.id, user.correo_electronico);
+    // Obtener el perfil del usuario
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', authData.user.id)
+      .single()
 
     return {
-      token,
+      access_token: authData.session.access_token,
       user: {
-        id: user.id,
-        nombre_completo: user.nombre_completo,
-        correo_electronico: user.correo_electronico
+        id: authData.user.id,
+        email: authData.user.email,
+        first_name: profile?.first_name,
+        last_name: profile?.last_name
       }
-    };
+    }
   }
 
-  /**
-   * Obtener usuario por ID
-   */
-  static async getUserById(userId: string) {
-    const user = await db.queryOne<Usuario>(
-      'SELECT id, nombre_completo, correo_electronico, foto_perfil, notificaciones_activas FROM usuarios WHERE id = ?',
-      [userId]
-    );
+  // Obtener datos del usuario autenticado
+  static async getMe(userId: string) {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, created_at')
+      .eq('id', userId)
+      .single()
 
-    if (!user) {
-      throw new Error('Usuario no encontrado');
-    }
+    if (error || !profile) throw new Error('Usuario no encontrado')
 
-    return user;
+    return profile
   }
 }

@@ -1,39 +1,46 @@
-// types/api.ts
-
 export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
 }
 
 export interface AuthResponse {
-  token: string;
+  access_token: string
   user: {
-    id: string;
-    nombre_completo: string;
-    correo_electronico: string;
-  };
+    id: string
+    email: string
+    first_name: string | null
+    last_name: string | null
+  }
 }
 
 export interface LoginRequest {
-  correo_electronico: string;
-  contrasena: string;
+  email: string
+  password: string
 }
 
 export interface RegisterRequest {
-  nombre_completo: string;
-  correo_electronico: string;
-  contrasena: string;
+  email: string
+  password: string
+  first_name: string
+  last_name: string
 }
 
 export interface CreateTaskRequest {
-  materia_id?: string;
-  titulo: string;
-  descripcion?: string;
-  fecha_entrega: string;
-  peso_calificacion: number;
-  nivel_complejidad?: number;
-  tipo_tarea?: string;
-  horas_estimadas?: number;
+  task_title: string
+  extra_note?: string
+  due_date: string
+  importance?: number
+  complexity?: number
+  subject_id?: string
+}
+
+export interface CreateSubjectRequest {
+  subject_name: string
+  color?: string
+}
+
+export interface CreateSubtaskRequest {
+  subtask_name: string
 }
